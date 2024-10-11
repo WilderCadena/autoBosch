@@ -1,14 +1,19 @@
 <?php
-$servername = "localhost"; // Cambia esto si tu servidor es diferente
-$username = "tu_usuario";   // Reemplaza 'tu_usuario' con tu nombre de usuario de la base de datos
-$password = "tu_contraseña"; // Reemplaza 'tu_contraseña' con tu contraseña de la base de datos
-$dbname = "autoserviciobosch"; // Asegúrate de que este sea el nombre correcto de tu base de datos
+// conexion.php: Conexión a la base de datos
 
-// Crear conexión
-$conn = new mysqli($servername, $username, $password, $dbname);
+$host = 'localhost';
+$db = 'autoserviciobosch'; // Nombre de tu base de datos
+$user = 'root'; // Cambia esto si tienes un usuario distinto
+$pass = ''; // Cambia esto si tienes una contraseña
 
-// Verificar conexión
-if ($conn->connect_error) {
-    die("Conexión fallida: " . $conn->connect_error);
+try {
+    $pdo = new PDO("mysql:host=$host;dbname=$db;charset=utf8", $user, $pass);
+    // Establecer el modo de error de PDO a excepción
+    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+} catch (PDOException $e) {
+    // Registrar el error en un archivo de logs (opcional)
+    error_log($e->getMessage(), 3, 'db_errors.log');
+    // Mensaje de error genérico
+    die("Error al conectar a la base de datos. Por favor, inténtelo más tarde.");
 }
 ?>

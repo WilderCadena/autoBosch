@@ -1,25 +1,34 @@
 <?php
-// Conectar a la base de datos
-include 'conexion.php';
+// Incluir el archivo de conexión
+include 'conexion.php'; // Asegúrate de que la ruta sea correcta
 
-// Obtener datos del formulario
-$nombres = $_POST['nombres'];
-$apellidos = $_POST['apellidos'];
-$correo = $_POST['correo'];
-$telefono = $_POST['telefono'];
-$contraseña = password_hash($_POST['contraseña'], PASSWORD_DEFAULT); // Hashing de la contraseña
+// Verificar si se han enviado los datos del formulario
+if ($_SERVER["REQUEST_METHOD"] == "POST") {
+    // Obtener los datos del formulario y sanitizarlos
+    $nombres = trim($_POST['nombres']);
+    $apellidos = trim($_POST['apellidos']);
+    $correo = trim($_POST['correo']);
+    $telefono = trim($_POST['telefono']);
+    $contraseña = trim($_POST['contraseña']);
 
-// Insertar en la base de datos
-$sql = "INSERT INTO usuarios (nombres, apellidos, correo, telefono, contraseña) VALUES (?, ?, ?, ?, ?)";
-$stmt = $conn->prepare($sql);
-$stmt->bind_param("sssss", $nombres, $apellidos, $correo, $telefono, $contraseña);
+    // Validación simple
+    if (empty($nombres) || empty($apellidos) || empty($correo) || empty($telefono) || empty($contraseña)) {
+        die("Por favor, complete todos los campos.");
+    }
 
-if ($stmt->execute()) {
-    echo "Registro exitoso.";
-} else {
-    echo "Error: " . $stmt->error;
+    // Hash de la contraseña
+    $hashedPassword = password_hash($contraseña, PASSWORD_DEFAULT);
+
+    try {
+        // Preparar la consulta SQL
+        $stmt = $pdo->prepare("INSERT INTO registro (Nombres, Apellidos, Correo, Telefono, Contraseña) VALUES (?, ?, ?, ?, ?)");
+        if ($stmt->execute([$nombres, $apellidos, $correo, $telefono, $hashedPassword])) {
+            echo "Registro guardado exitosamente.";
+        } else {
+            echo "Error al guardar el registro.";
+        }
+    } catch (PDOException $e) {
+        echo "Error al guardar el registro: " . $e->getMessage();
+    }
 }
-
-$stmt->close();
-$conn->close();
 ?>

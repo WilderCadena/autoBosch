@@ -15,19 +15,16 @@ $usuario_id = $_SESSION['usuario_id'];
 // Manejo de la imagen
 $imagen = $_FILES['imagen']['name'];
 $target = "uploads/" . basename($imagen);
-move_uploaded_file($_FILES['imagen']['tmp_name'], $target);
-
-// Insertar en la base de datos
-$sql = "INSERT INTO cotizaciones (usuario_id, comentario, imagen) VALUES (?, ?, ?)";
-$stmt = $conn->prepare($sql);
-$stmt->bind_param("iss", $usuario_id, $comentario, $imagen);
-
-if ($stmt->execute()) {
-    echo "Cotización enviada.";
+if (move_uploaded_file($_FILES['imagen']['tmp_name'], $target)) {
+    // Insertar en la base de datos
+    $sql = "INSERT INTO cotizaciones (usuario_id, comentario, imagen) VALUES (?, ?, ?)";
+    $stmt = $pdo->prepare($sql);
+    if ($stmt->execute([$usuario_id, $comentario, $imagen])) {
+        echo "Cotización enviada.";
+    } else {
+        echo "Error al enviar la cotización.";
+    }
 } else {
-    echo "Error: " . $stmt->error;
+    echo "Error al subir la imagen.";
 }
-
-$stmt->close();
-$conn->close();
 ?>

@@ -1,33 +1,32 @@
 <?php
-// Conectar a la base de datos
-include 'conexion.php';
+session_start(); // Inicia la sesión
+include 'conexion.php'; // Asegúrate de que la ruta sea correcta
 
-// Obtener datos del formulario
-$correo = $_POST['correo'];
-$contraseña = $_POST['contraseña'];
+// Verificar si se han enviado los datos del formulario
+if ($_SERVER["REQUEST_METHOD"] == "POST") {
+    $correo = $_POST['correo'];
+    $contraseña = $_POST['contraseña'];
 
-// Buscar el usuario en la base de datos
-$sql = "SELECT * FROM usuarios WHERE correo = ?";
-$stmt = $conn->prepare($sql);
-$stmt->bind_param("s", $correo);
-$stmt->execute();
-$result = $stmt->get_result();
+    // Preparar la consulta SQL para verificar el usuario
+    $stmt = $pdo->prepare("SELECT * FROM registro WHERE Correo = :correo");
+    $stmt->bindParam(':correo', $correo);
+    $stmt->execute();
 
-if ($result->num_rows > 0) {
-    $usuario = $result->fetch_assoc();
-    // Verificar la contraseña
-    if (password_verify($contraseña, $usuario['contraseña'])) {
-        session_start();
-        $_SESSION['usuario_id'] = $usuario['id']; // Guardar el ID del usuario en la sesión
-        echo "Bienvenido, " . $usuario['nombres'];
-        // Aquí redirigir a la página de cotización
+    // Verificar si se encontró el usuario
+    if ($stmt->rowCount() > 0) {
+        $usuario = $stmt->fetch(PDO::FETCH_ASSOC);
+        
+        // Verificar la contraseña
+        if (password_verify($contraseña, $usuario['Contraseña'])) {
+            // Contraseña correcta: guardar la sesión y redirigir
+            $_SESSION['usuario'] = $usuario['Nombres']; // Cambiar según lo que necesites
+            header("Location: cotizacion.php");
+            exit();
+        } else {
+            echo "Contraseña incorrecta.";
+        }
     } else {
-        echo "Contraseña incorrecta.";
+        echo "No se encontró el usuario.";
     }
-} else {
-    echo "Usuario no encontrado.";
 }
-
-$stmt->close();
-$conn->close();
 ?>
