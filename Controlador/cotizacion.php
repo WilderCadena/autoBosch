@@ -1,36 +1,40 @@
 <?php
-include '../Modelo/db.php';
+session_start();
+if (!isset($_SESSION['user_id'])) {
+    header("Location: login.php");
+    exit();
+}
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+include '../Modelo/db.php';
+include '../Modelo/enviar_correo.php';
+
+$mensaje = '';
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['nombre'])) {
     $nombre = $_POST['nombre'];
     $correo = $_POST['correo'];
     $comentarios = $_POST['comentarios'];
     $imagen = null;
 
-    if (isset($_FILES['foto']) && $_FILES['foto']['error'] == UPLOAD_ERR_OK) {
+    if (isset($_FILES['foto']) && $_FILES['foto']['error'] === UPLOAD_ERR_OK) {
         $fileTmpPath = $_FILES['foto']['tmp_name'];
-        $fileName = $_FILES['foto']['name'];
-        $filePath = 'subidas/' . $fileName; 
-
+        $fileName = basename($_FILES['foto']['name']);
+        $filePath = 'subidas/' . $fileName;
         move_uploaded_file($fileTmpPath, $filePath);
-        $imagen = $filePath; // Guarda la ruta de la imagen
+        $imagen = $filePath;
     }
 
-    // Inserta los datos en la base de datos
     try {
         $stmt = $conexion->prepare("INSERT INTO cotizaciones (nombre, correo, comentario, imagen) VALUES (?, ?, ?, ?)");
-        $stmt->execute([$nombre, $correo, $comentarios, $imagen]);
-
-        // Redirige a la misma página con un mensaje de éxito
-        header("Location: cotizacion.php?mensaje=success");
-        exit();
+        if ($stmt->execute([$nombre, $correo, $comentarios, $imagen])) {
+            enviarCorreoCotizacion($correo, $nombre, $comentarios, 'wildercadena0828@gmail.com', $imagen);
+            header("Location: cotizacion.php?enviado=ok");
+            exit();
+        }
     } catch (PDOException $e) {
-        echo "Error al guardar la cotización: " . $e->getMessage();
+        $mensaje = "Error al guardar la cotización: " . $e->getMessage();
     }
 }
-
-// Verifica si hay un mensaje en la URL
-$mensaje = isset($_GET['mensaje']) ? $_GET['mensaje'] : '';
 ?>
 
 <!DOCTYPE html>
@@ -41,17 +45,32 @@ $mensaje = isset($_GET['mensaje']) ? $_GET['mensaje'] : '';
     <link
       href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0/dist/css/bootstrap.min.css"
       rel="stylesheet"
-      integrity="sha384-gH2yIJqKdNHPEq0n4Mqa/HGKIhSkIHeL5AyhkYV8i59U5AR6csBvApHHNl/vI1Bx"
-      crossorigin="anonymous"
     />
     <title>Realiza tu cotización</title>
 </head>
-<body class="bg-dark d-flex justify-content-center align-items-center vh-100">
+<body class="bg-dark">
+
+<!-- Navbar -->
+<nav class="navbar navbar-dark bg-dark px-4">
+    <a class="navbar-brand mb-0 h1 text-white text-decoration-none" href="../Vista/inicio.html">AutoBosch</a>
+    <a href="logout.php" class="btn btn-danger">Cerrar sesión</a>
+</nav>
+
+
+<?php if (isset($_GET['enviado']) && $_GET['enviado'] === 'ok'): ?>
+    <div class="container mt-5">
+        <div class="alert alert-success text-center" role="alert">
+            ✅ ¡Tu cotización fue enviada correctamente!
+        </div>
+    </div>
+<?php else: ?>
+
+<div class="container d-flex justify-content-center align-items-center" style="min-height: 90vh;">
     <div class="bg-white p-4 rounded-5 text-secondary shadow" style="width: 25rem;">
         <h1 class="text-center fs-2 fw-bold">Realiza tu cotización</h1>
 
-        <?php if ($mensaje === 'success'): ?>
-            <p class="text-success text-center">¡Cotización enviada con éxito!</p>
+        <?php if (!empty($mensaje)): ?>
+            <p class="text-danger text-center"><?= $mensaje ?></p>
         <?php endif; ?>
 
         <form action="" method="post" enctype="multipart/form-data">
@@ -79,12 +98,10 @@ $mensaje = isset($_GET['mensaje']) ? $_GET['mensaje'] : '';
                 <button type="submit" class="btn" style="background-color: #1abc9c; color: white;">Enviar cotización</button>
             </div>
         </form>
-
-        <h2 class="mt-4 text-center">¿Deseas cerrar sesión?</h2>
-        <form action="logout.php" method="post" class="text-center">
-            <button type="submit" name="cerrar_sesion" value="si" class="btn btn-danger">Sí</button>
-            <button type="submit" name="cerrar_sesion" value="no" class="btn btn-secondary">No</button>
-        </form>
     </div>
+</div>
+
+<?php endif; ?>
+
 </body>
 </html>

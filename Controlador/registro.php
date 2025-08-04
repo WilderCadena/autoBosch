@@ -1,22 +1,29 @@
 <?php
-
 include '../Modelo/db.php';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-
     $nombres = $_POST['nombres'];
     $apellidos = $_POST['apellidos'];
     $correo = $_POST['correo'];
     $telefono = $_POST['telefono'];
-    $contrasena = password_hash($_POST['password'], PASSWORD_DEFAULT); 
+    $contrasena = password_hash($_POST['password'], PASSWORD_DEFAULT);
 
-    $stmtRegistro = $conexion->prepare("INSERT INTO registro (Nombres, Apellidos, Correo, Telefono, Contraseña) VALUES (?, ?, ?, ?, ?)");
+    // Validar si el correo ya existe
+    $stmtCheck = $conexion->prepare("SELECT COUNT(*) FROM registro WHERE Correo = ?");
+    $stmtCheck->execute([$correo]);
+    $existe = $stmtCheck->fetchColumn();
 
-    
-    if ($stmtRegistro->execute([$nombres, $apellidos, $correo, $telefono, $contrasena])) {
-        echo "Registro exitoso.";
+    if ($existe > 0) {
+        $error = "⚠️ El correo ya está registrado. Intenta con otro.";
     } else {
-        echo "Error al registrar.";
+        $stmtRegistro = $conexion->prepare("INSERT INTO registro (Nombres, Apellidos, Correo, Telefono, Contraseña) VALUES (?, ?, ?, ?, ?)");
+
+        if ($stmtRegistro->execute([$nombres, $apellidos, $correo, $telefono, $contrasena])) {
+            header("Location: login.php?registro=success");
+            exit();
+        } else {
+            $error = "❌ Error al registrar. Inténtalo de nuevo.";
+        }
     }
 }
 ?>
@@ -29,13 +36,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <link
       href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0/dist/css/bootstrap.min.css"
       rel="stylesheet"
-      integrity="sha384-gH2yIJqKdNHPEq0n4Mqa/HGKIhSkIHeL5AyhkYV8i59U5AR6csBvApHHNl/vI1Bx"
-      crossorigin="anonymous"
     />
     <title>Registro</title>
 </head>
 <body class="bg-dark d-flex justify-content-center align-items-center vh-100">
     <div class="bg-white p-5 rounded-5 text-secondary shadow" style="width: 25rem;">
+        <?php if (isset($error)): ?>
+            <div class="alert alert-danger text-center mb-3"><?= $error ?></div>
+        <?php endif; ?>
+
         <div class="text-center fs-1 fw-bold">Registrarse</div>
         <form method="post">
             <div class="input-group mt-4">
@@ -64,10 +73,3 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </div>
 </body>
 </html>
-
-
-
-
-
-
-    

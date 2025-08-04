@@ -11,11 +11,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $usuario = $stmtLogin->fetch(PDO::FETCH_ASSOC); 
 
     if ($usuario && password_verify($contrasena, $usuario['Contraseña'])) {
-        $_SESSION['user_id'] = $usuario['id'];
+        $_SESSION['user_id'] = $usuario['Id'];
         header("Location: cotizacion.php");
         exit();
     } else {
-        echo "Correo o contraseña incorrectos.";
+        $error = "Correo o contraseña incorrectos.";
     }
 }
 ?>
@@ -28,13 +28,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <link
       href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0/dist/css/bootstrap.min.css"
       rel="stylesheet"
-      integrity="sha384-gH2yIJqKdNHPEq0n4Mqa/HGKIhSkIHeL5AyhkYV8i59U5AR6csBvApHHNl/vI1Bx"
-      crossorigin="anonymous"
     />
     <title>Iniciar sesión</title>
 </head>
 <body class="bg-dark d-flex justify-content-center align-items-center vh-100">
     <div class="bg-white p-5 rounded-5 text-secondary shadow" style="width: 25rem;">
+
+        <?php if (isset($_GET['cerrado']) && $_GET['cerrado'] == 1): ?>
+            <div class="alert alert-success text-center mb-3">✅ Has cerrado sesión correctamente.</div>
+        <?php endif; ?>
+
+        <?php if (isset($_GET['registro']) && $_GET['registro'] === 'success'): ?>
+            <div class="alert alert-success text-center mb-3">✅ Registro exitoso. ¡Ahora puedes iniciar sesión!</div>
+        <?php endif; ?>
+
+        <?php if (isset($error)): ?>
+            <div class="alert alert-danger text-center mb-3"><?= $error ?></div>
+        <?php endif; ?>
+
         <div class="text-center fs-1 fw-bold">Iniciar sesión</div>
         <form method="post">
             <div class="input-group mt-4">
@@ -54,4 +65,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </div>
 </body>
 </html>
+
+
 
