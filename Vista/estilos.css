@@ -45,34 +45,49 @@ body{
     font-weight: 800;
 }
 
-.menu .navbar ul li{
-    position: relative;
-    float: left;
+/* Menú principal alineado de derecha a izquierda */
+.menu .navbar ul {
+    display: flex;
+    justify-content: flex-end;       /* Alinea todo el menú a la derecha */
+    flex-direction: row-reverse;     /* Invierte el orden (de derecha a izquierda) */
+    gap: 10px;
+    list-style: none;
+    padding: 0;
+    margin: 0;
 }
-.menu .navbar ul li a{
+
+.menu .navbar ul li {
+    position: relative;
+    /* Se elimina float: left */
+}
+
+.menu .navbar ul li a {
     font-size: 18px;
     padding: 20px;
     color: #FFFDFC;
     display: block;
     font-weight: 600;
+    text-decoration: none;
 }
 
-.menu .navbar ul li a:hover{
-    color: #ce9678
+.menu .navbar ul li a:hover {
+    color: #ce9678;
 }
 
-#menu{
+#menu {
     display: none;
 }
 
-.menu-icono{
+.menu-icono {
     width: 25px;
 }
 
-.menu label{
+.menu label {
     cursor: pointer;
     display: none;
 }
+
+
 
 .header-content{
     text-align: center;
@@ -441,8 +456,3 @@ p{
 .cotizacion button:hover {
     background-color: #218838;
 }
-
-
-
-
-
