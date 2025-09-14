@@ -54,6 +54,66 @@
         .back-link a:hover {
             color: #09314a;
         }
+
+        .aviso-container {
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        .aviso-btn {
+            background-color: #0c4160;
+            color: #fff;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+
+        .aviso-btn:hover {
+            background-color: #09314a;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 999;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.5);
+        }
+
+        .modal-content {
+            background-color: #fff;
+            margin: 10% auto;
+            padding: 20px;
+            border-radius: 10px;
+            width: 80%;
+            max-width: 600px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            font-family: "Poppins", sans-serif;
+        }
+
+        .modal-content h2 {
+            margin-top: 0;
+            color: #0c4160;
+        }
+
+        .close {
+            color: #aaa;
+            float: right;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+
+        .close:hover,
+        .close:focus {
+            color: #000;
+        }
     </style>
 </head>
 <body>
@@ -62,24 +122,61 @@
 
         <p>En AutoBosch, valoramos y respetamos la privacidad de nuestros usuarios. Esta política describe cómo recopilamos, usamos y protegemos la información personal que usted nos proporciona a través de nuestro sistema de cotización digital.</p>
 
-        <h2>1. Recolección de Información</h2>
+        <h2>1. Marco Legal</h2>
+        <p>El tratamiento de datos personales realizado por AutoBosch se ajusta a la Constitución Política de Colombia (Artículo 15), la <strong>Ley 1581 de 2012</strong> y su decreto reglamentario <strong>1377 de 2013</strong>, así como a las demás disposiciones que modifiquen o complementen estas normas. En caso de tratar datos financieros o crediticios, se tendrá en cuenta la <strong>Ley 1266 de 2008</strong>. AutoBosch garantiza el respeto de los derechos de los titulares conforme al derecho fundamental de habeas data.</p>
+
+        <h2>2. Recolección de Información</h2>
         <p>Recopilamos información personal como nombres, correos electrónicos, teléfonos, y descripciones de servicio para ofrecer una mejor atención y servicio.</p>
 
-        <h2>2. Uso de la Información</h2>
+        <h2>3. Uso de la Información</h2>
         <p>Los datos recolectados se utilizan exclusivamente para gestionar solicitudes de cotización, programar servicios y mantener comunicación con nuestros clientes. No compartimos esta información con terceros sin autorización previa.</p>
 
-        <h2>3. Almacenamiento y Seguridad</h2>
+        <h2>4. Almacenamiento y Seguridad</h2>
         <p>La información proporcionada se almacena de forma segura y se implementan medidas técnicas y administrativas para evitar accesos no autorizados.</p>
 
-        <h2>4. Derechos del Titular</h2>
+        <h2>5. Derechos del Titular</h2>
         <p>Como titular de los datos personales, usted puede ejercer sus derechos a conocer, actualizar, rectificar y eliminar su información, escribiéndonos a <strong>autoserviciobosh@gmail.com</strong>.</p>
 
-        <h2>5. Consentimiento</h2>
+        <h2>6. Consentimiento</h2>
         <p>Al usar nuestra plataforma, usted acepta el tratamiento de sus datos personales conforme a esta política.</p>
+
+        <div class="aviso-container">
+            <button id="openModal" class="aviso-btn">Ver Aviso de Privacidad</button>
+        </div>
+
+        <div id="modalAviso" class="modal">
+          <div class="modal-content">
+            <span class="close">&times;</span>
+            <h2>Aviso de Privacidad</h2>
+            <p>
+              AutoBosch informa que los datos personales solicitados en esta plataforma serán tratados con estricta confidencialidad y utilizados únicamente para los fines descritos en esta política. Al suministrar su información, usted acepta este tratamiento y autoriza su uso conforme a la Ley 1581 de 2012 y demás normas aplicables. Si desea conocer más sobre el manejo de sus datos o ejercer sus derechos, puede escribirnos al correo <strong>autoserviciobosh@gmail.com</strong>.
+            </p>
+          </div>
+        </div>
 
         <div class="back-link">
             <a href="../Vista/inicio.html">← Volver al inicio</a>
         </div>
     </div>
+    <script>
+      var modal = document.getElementById("modalAviso");
+      var btn = document.getElementById("openModal");
+      var span = document.getElementsByClassName("close")[0];
+
+      btn.onclick = function() {
+        modal.style.display = "block";
+      }
+
+      span.onclick = function() {
+        modal.style.display = "none";
+      }
+
+      window.onclick = function(event) {
+        if (event.target == modal) {
+          modal.style.display = "none";
+        }
+      }
+    </script>
 </body>
 </html>
+
