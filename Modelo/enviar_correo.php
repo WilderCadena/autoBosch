@@ -3,9 +3,9 @@ use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
 
 // Requiere las clases de PHPMailer (ajusta la ruta si es diferente)
-require '../libs/PHPMailer-master/src/PHPMailer.php';
-require '../libs/PHPMailer-master/src/SMTP.php';
-require '../libs/PHPMailer-master/src/Exception.php';
+require '../Libs/PHPMailer-master/src/PHPMailer.php';
+require '../Libs/PHPMailer-master/src/SMTP.php';
+require '../Libs/PHPMailer-master/src/Exception.php';
 
 function enviarCorreoCotizacion($paraCliente, $nombreCliente, $comentario, $adminCorreo, $imagenPath = null) {
     $mail = new PHPMailer(true);
@@ -15,7 +15,7 @@ function enviarCorreoCotizacion($paraCliente, $nombreCliente, $comentario, $admi
         $mail->isSMTP();
         $mail->Host = 'smtp.gmail.com';
         $mail->SMTPAuth = true;
-        $mail->Username = 'wildercadena0828@gmail.com'; // Tu correo Gmail
+        $mail->Username = 'wildercadena0828@gmail.com'; // correo
         $mail->Password = 'jlds quzc eunt ppbl';           // 👈 Reemplaza esto por la clave generada
         $mail->SMTPSecure = 'tls';
         $mail->Port = 587;

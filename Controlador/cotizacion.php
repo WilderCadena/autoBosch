@@ -1,4 +1,7 @@
 <?php
+error_reporting(E_ALL);
+ini_set('display_errors', 1);
+
 session_start();
 if (!isset($_SESSION['user_id'])) {
     header("Location: login.php");
@@ -10,98 +13,93 @@ include '../Modelo/enviar_correo.php';
 
 $mensaje = '';
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['nombre'])) {
-    $nombre = $_POST['nombre'];
-    $correo = $_POST['correo'];
-    $comentarios = $_POST['comentarios'];
-    $imagen = null;
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $vehiculo    = trim($_POST['vehiculo'] ?? '');
+    $descripcion = trim($_POST['descripcion'] ?? '');
+    $imagen      = null;
 
-    if (isset($_FILES['foto']) && $_FILES['foto']['error'] === UPLOAD_ERR_OK) {
-        $fileTmpPath = $_FILES['foto']['tmp_name'];
-        $fileName = basename($_FILES['foto']['name']);
+    if (isset($_FILES['imagen']) && $_FILES['imagen']['error'] === UPLOAD_ERR_OK) {
+        $fileTmpPath = $_FILES['imagen']['tmp_name'];
+        $fileName = basename($_FILES['imagen']['name']);
         $filePath = 'subidas/' . $fileName;
         move_uploaded_file($fileTmpPath, $filePath);
         $imagen = $filePath;
     }
 
     try {
+        // Insertar cotización sin user_id
         $stmt = $conexion->prepare("INSERT INTO cotizaciones (nombre, correo, comentario, imagen) VALUES (?, ?, ?, ?)");
-        if ($stmt->execute([$nombre, $correo, $comentarios, $imagen])) {
-            enviarCorreoCotizacion($correo, $nombre, $comentarios, 'wildercadena0828@gmail.com', $imagen);
+
+        $stmtUser = $conexion->prepare("SELECT Correo, Nombres FROM registro WHERE Id = ?");
+        $stmtUser->execute([$_SESSION['user_id']]);
+        $usuario = $stmtUser->fetch(PDO::FETCH_ASSOC);
+
+        if ($stmt->execute([$usuario['Nombres'], $usuario['Correo'], $descripcion, $imagen])) {
+            enviarCorreoCotizacion(
+                $usuario['Correo'], 
+                $usuario['Nombres'], 
+                $descripcion, 
+                'wildercadena0828@gmail.com', 
+                $imagen
+            );
             header("Location: cotizacion.php?enviado=ok");
             exit();
         }
     } catch (PDOException $e) {
-        $mensaje = "Error al guardar la cotización: " . $e->getMessage();
+        $mensaje = "❌ Error al guardar la cotización: " . $e->getMessage();
     }
 }
+
+$stmt = $conexion->prepare("SELECT * FROM registro WHERE Id = ?");
+$stmt->execute([$_SESSION['user_id']]);
+$usuario = $stmt->fetch(PDO::FETCH_ASSOC);
 ?>
 
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link
-      href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0/dist/css/bootstrap.min.css"
-      rel="stylesheet"
-    />
-    <title>Realiza tu cotización</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Solicitud de Cotización - AutoBosch</title>
+<link rel="stylesheet" href="../Vista/estilos.css">
 </head>
-<body class="bg-dark">
+<body>
 
-<!-- Navbar -->
-<nav class="navbar navbar-dark bg-dark px-4">
-    <a class="navbar-brand mb-0 h1 text-white text-decoration-none" href="../Vista/inicio.html">AutoBosch</a>
-    <a href="logout.php" class="btn btn-danger">Cerrar sesión</a>
-</nav>
+<div class="form-container">
+    <h2>Solicitar Cotización</h2>
 
+    <p>Bienvenido, <?= htmlspecialchars($usuario['Nombres']) ?></p>
 
-<?php if (isset($_GET['enviado']) && $_GET['enviado'] === 'ok'): ?>
-    <div class="container mt-5">
-        <div class="alert alert-success text-center" role="alert">
+    <?php if (isset($_GET['enviado']) && $_GET['enviado'] === 'ok'): ?>
+        <div class="alert-success-container">
             ✅ ¡Tu cotización fue enviada correctamente!
         </div>
-    </div>
-<?php else: ?>
-
-<div class="container d-flex justify-content-center align-items-center" style="min-height: 90vh;">
-    <div class="bg-white p-4 rounded-5 text-secondary shadow" style="width: 25rem;">
-        <h1 class="text-center fs-2 fw-bold">Realiza tu cotización</h1>
-
+        <div style="text-align:center; margin-top: 20px;">
+            <a href="../Vista/inicio.html" class="btn-primary">Volver al inicio</a>
+        </div>
+    <?php else: ?>
         <?php if (!empty($mensaje)): ?>
-            <p class="text-danger text-center"><?= $mensaje ?></p>
+            <div class="alert-danger">
+                <?= htmlspecialchars($mensaje) ?>
+            </div>
         <?php endif; ?>
 
-        <form action="" method="post" enctype="multipart/form-data">
-            <div class="mb-3">
-                <label for="nombre" class="form-label">Nombre:</label>
-                <input type="text" id="nombre" name="nombre" class="form-control" required>
-            </div>
+        <form action="" method="POST" enctype="multipart/form-data">
+            <label for="vehiculo">Tipo de vehículo:</label>
+            <input type="text" name="vehiculo" id="vehiculo" required>
 
-            <div class="mb-3">
-                <label for="correo" class="form-label">Correo electrónico:</label>
-                <input type="email" id="correo" name="correo" class="form-control" required>
-            </div>
+            <label for="descripcion">Descripción del servicio:</label>
+            <textarea name="descripcion" id="descripcion" rows="4" required></textarea>
 
-            <div class="mb-3">
-                <label for="comentarios" class="form-label">Comentarios:</label>
-                <textarea id="comentarios" name="comentarios" class="form-control" rows="4" required></textarea>
-            </div>
+            <label for="imagen">Adjuntar imagen (opcional):</label>
+            <input type="file" name="imagen" id="imagen" accept="image/*">
 
-            <div class="mb-3">
-                <label for="foto" class="form-label">Adjuntar foto:</label>
-                <input type="file" id="foto" name="foto" class="form-control" accept="image/*">
-            </div>
-
-            <div class="d-flex justify-content-center">
-                <button type="submit" class="btn" style="background-color: #1abc9c; color: white;">Enviar cotización</button>
-            </div>
+            <button type="submit">Enviar Cotización</button>
         </form>
-    </div>
-</div>
+    <?php endif; ?>
 
-<?php endif; ?>
+    <a href="logout.php" class="btn-logout">Cerrar sesión</a>
+</div>
 
 </body>
 </html>

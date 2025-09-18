@@ -1,28 +1,39 @@
 <?php
 include '../Modelo/db.php';
 
+$error = '';
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $nombres = $_POST['nombres'];
-    $apellidos = $_POST['apellidos'];
-    $correo = $_POST['correo'];
-    $telefono = $_POST['telefono'];
-    $contrasena = password_hash($_POST['password'], PASSWORD_DEFAULT);
+    $nombres = trim($_POST['nombres']);
+    $apellidos = trim($_POST['apellidos']);
+    $correo = trim($_POST['correo']);
+    $telefono = trim($_POST['telefono']);
+    $password = $_POST['password'];
 
-    // Validar si el correo ya existe
-    $stmtCheck = $conexion->prepare("SELECT COUNT(*) FROM registro WHERE Correo = ?");
-    $stmtCheck->execute([$correo]);
-    $existe = $stmtCheck->fetchColumn();
-
-    if ($existe > 0) {
-        $error = "⚠️ El correo ya está registrado. Intenta con otro.";
+    // VALIDACIONES PHP
+    if (!preg_match("/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/u", $nombres)) {
+        $error = "⚠️ El nombre solo puede contener letras y espacios.";
+    } elseif (!preg_match("/^[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]+$/u", $apellidos)) {
+        $error = "⚠️ Los apellidos solo pueden contener letras y espacios.";
+    } elseif (!filter_var($correo, FILTER_VALIDATE_EMAIL) || !str_contains($correo, '@')) {
+        $error = "⚠️ Correo inválido.";
+    } elseif (!preg_match("/^[0-9]+$/", $telefono) || (int)$telefono <= 0) {
+        $error = "⚠️ El teléfono solo puede contener números positivos.";
     } else {
-        $stmtRegistro = $conexion->prepare("INSERT INTO registro (Nombres, Apellidos, Correo, Telefono, Contraseña) VALUES (?, ?, ?, ?, ?)");
-
-        if ($stmtRegistro->execute([$nombres, $apellidos, $correo, $telefono, $contrasena])) {
-            header("Location: login.php?registro=success");
-            exit();
+        // VALIDAR SI EL CORREO EXISTE
+        $stmtCheck = $conexion->prepare("SELECT COUNT(*) FROM registro WHERE Correo = ?");
+        $stmtCheck->execute([$correo]);
+        if ($stmtCheck->fetchColumn() > 0) {
+            $error = "⚠️ El correo ya está registrado.";
         } else {
-            $error = "❌ Error al registrar. Inténtalo de nuevo.";
+            $hash = password_hash($password, PASSWORD_DEFAULT);
+            $stmtRegistro = $conexion->prepare("INSERT INTO registro (Nombres, Apellidos, Correo, Telefono, Contraseña) VALUES (?, ?, ?, ?, ?)");
+            if ($stmtRegistro->execute([$nombres, $apellidos, $correo, $telefono, $hash])) {
+                header("Location: login.php?registro=success");
+                exit();
+            } else {
+                $error = "❌ Error al registrar. Inténtalo de nuevo.";
+            }
         }
     }
 }
@@ -31,45 +42,68 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link
-      href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.0/dist/css/bootstrap.min.css"
-      rel="stylesheet"
-    />
-    <title>Registro</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="../Vista/estilos.css">
+<title>Registro</title>
 </head>
-<body class="bg-dark d-flex justify-content-center align-items-center vh-100">
-    <div class="bg-white p-5 rounded-5 text-secondary shadow" style="width: 25rem;">
-        <?php if (isset($error)): ?>
-            <div class="alert alert-danger text-center mb-3"><?= $error ?></div>
-        <?php endif; ?>
+<body>
 
-        <div class="text-center fs-1 fw-bold">Registrarse</div>
-        <form method="post">
-            <div class="input-group mt-4">
-                <input type="text" name="nombres" class="form-control bg-light" placeholder="Nombres" required>
-            </div>
-            <div class="input-group mt-1">
-                <input type="text" name="apellidos" class="form-control bg-light" placeholder="Apellidos" required>
-            </div>
-            <div class="input-group mt-1">
-                <input type="email" name="correo" class="form-control bg-light" placeholder="Correo" required>
-            </div>
-            <div class="input-group mt-1">
-                <input type="tel" name="telefono" class="form-control bg-light" placeholder="Teléfono" required>
-            </div>
-            <div class="input-group mt-1">
-                <input type="password" name="password" class="form-control bg-light" placeholder="Contraseña" required>
-            </div>
-            <div class="d-flex justify-content-center mt-4">
-                <button type="submit" class="btn" style="background-color: #1abc9c; color: white; width: 100%; font-weight: 600;">Registrarse</button>
-            </div>
-        </form>
-        <div class="d-flex gap-1 justify-content-center mt-3">
-            <div>¿Ya tienes cuenta?</div>
-            <a href="login.php" class="text-decoration-none" style="color: #1abc9c; font-weight: 600;">Iniciar sesión</a>
-        </div>
+<div class="register-container">
+    <h2>Registro de Usuario</h2>
+
+    <?php if ($error): ?>
+        <div class="alert alert-danger"><?= htmlspecialchars($error) ?></div>
+    <?php endif; ?>
+
+    <form method="post" id="formRegistro">
+        <label for="nombres">Nombres:</label>
+        <input type="text" id="nombres" name="nombres" required
+               pattern="[A-Za-záéíóúÁÉÍÓÚñÑ\s]+"
+               title="Solo letras y espacios">
+
+        <label for="apellidos">Apellidos:</label>
+        <input type="text" id="apellidos" name="apellidos" required
+               pattern="[A-Za-záéíóúÁÉÍÓÚñÑ\s]+"
+               title="Solo letras y espacios">
+
+        <label for="correo">Correo electrónico:</label>
+        <input type="email" id="correo" name="correo" required placeholder="ejemplo@correo.com">
+
+        <label for="telefono">Teléfono:</label>
+        <input type="text" id="telefono" name="telefono" required placeholder="">
+
+        <label for="password">Contraseña:</label>
+        <input type="password" id="password" name="password" required>
+
+        <button type="submit" class="btn-submit">Registrarse</button>
+    </form>
+
+    <div class="form-footer">
+        ¿Ya tienes cuenta? <a href="login.php">Iniciar sesión</a>
     </div>
+</div>
+
+<script>
+    // Bloquear números en Nombres y Apellidos
+    const soloLetras = (e) => {
+        const char = String.fromCharCode(e.keyCode);
+        if (!/[a-zA-ZáéíóúÁÉÍÓÚñÑ\s]/.test(char) && e.keyCode !== 8 && e.keyCode !== 32) {
+            e.preventDefault();
+        }
+    }
+
+    document.getElementById('nombres').addEventListener('keypress', soloLetras);
+    document.getElementById('apellidos').addEventListener('keypress', soloLetras);
+
+    // Bloquear letras en Teléfono, solo números positivos
+    document.getElementById('telefono').addEventListener('keypress', function(e) {
+        const char = String.fromCharCode(e.keyCode);
+        if (!/[0-9]/.test(char)) {
+            e.preventDefault();
+        }
+    });
+</script>
+
 </body>
 </html>
